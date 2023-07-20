@@ -3,13 +3,14 @@ package controller
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/aiteung/musik"
 	"github.com/aiteung/presensi"
 	"github.com/gocroot/gocroot/config"
-	"github.com/gocroot/gocroot/models"
 	"github.com/gocroot/gocroot/pisato"
 	"github.com/gocroot/gocroot/utils"
 	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"time"
@@ -50,7 +51,7 @@ func PostWhatsAuthRequest(c *fiber.Ctx) error {
 }
 
 func LoginUser(c *fiber.Ctx) error {
-	var userLogin models.UserLogin
+	var userLogin whatsauth.LoginInfo
 	var userInfo whatsauth.LoginInfo
 
 	db := config.Ulbimongoconn.Collection("user")
@@ -59,15 +60,16 @@ func LoginUser(c *fiber.Ctx) error {
 		return utils.ErrorLogRes(http.StatusBadRequest, err, "error", c)
 	}
 
-	if err := db.FindOne(context.TODO(), userLogin.UserName).Decode(userInfo); err == nil {
+	if err := db.FindOne(context.TODO(), bson.M{"user_name": userLogin.Username}).Decode(&userInfo); err != nil {
 		return utils.ErrorLogRes(http.StatusInternalServerError, err, "error", c)
 	}
 
-	if userLogin.UserName == "" {
+	if userInfo.Username == "" {
 		return utils.ErrorLogRes(http.StatusBadRequest, errors.New("user not found"), "error", c)
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(userLogin.Password), []byte(userInfo.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(userInfo.Password), []byte(userLogin.Password)); err != nil {
+		fmt.Println("2")
 		return utils.ErrorLogRes(http.StatusInternalServerError, err, "error", c)
 	}
 
@@ -76,7 +78,7 @@ func LoginUser(c *fiber.Ctx) error {
 		return utils.ErrorLogRes(http.StatusBadRequest, err, "error", c)
 	}
 
-	token, err := maker.CreateToken(userLogin.UserName, 4*time.Hour)
+	token, err := maker.CreateToken(userLogin.Username, 4*time.Hour)
 	if err != nil {
 		return utils.ErrorLogRes(http.StatusBadRequest, err, "error", c)
 	}
