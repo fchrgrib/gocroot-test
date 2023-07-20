@@ -11,7 +11,7 @@ require (
 	github.com/gofiber/websocket/v2 v2.1.4
 	github.com/google/uuid v1.3.0
 	github.com/o1egl/paseto v1.0.0
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.4
 	github.com/whatsauth/whatsauth v0.1.82
 	golang.org/x/crypto v0.6.0
 )
