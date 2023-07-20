@@ -14,12 +14,12 @@ var MongoString string = os.Getenv("MONGOSTRING")
 var MariaStringAkademik string = os.Getenv("MARIASTRINGAKADEMIK")
 
 var DBUlbimariainfo = atdb.DBInfo{
-	DBString: MariaStringAkademik,
+	DBString: "lg3icrxb5prewdhg3bw2:pscale_pw_zADHWa0WESdTN4kSKeJUbjB7KGjEOKlJxyxpRzclVze@tcp(aws.connect.psdb.cloud)/dbmahasiswa?tls=true",
 	DBName:   "xia3fhuwzm5wo0zo",
 }
 
 var DBUlbimongoinfo = atdb.DBInfo{
-	DBString: MongoString,
+	DBString: "mongodb+srv://fchrgrib:fchrgrib2310@cluster0.gaylydy.mongodb.net/?retryWrites=true&w=majority",
 	DBName:   "iteung",
 }
 

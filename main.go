@@ -19,6 +19,7 @@ func main() {
 	go whatsauth.RunHub()
 	site := fiber.New(config.Iteung)
 	site.Use(cors.New(config.Cors))
+	url.AuthSession(site)
 	url.Web(site)
 	log.Fatal(site.Listen(musik.Dangdut()))
 }

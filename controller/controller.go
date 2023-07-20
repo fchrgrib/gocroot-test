@@ -1,9 +1,18 @@
 package controller
 
 import (
+	"context"
+	"errors"
 	"github.com/aiteung/musik"
 	"github.com/aiteung/presensi"
 	"github.com/gocroot/gocroot/config"
+	"github.com/gocroot/gocroot/models"
+	"github.com/gocroot/gocroot/pisato"
+	"github.com/gocroot/gocroot/utils"
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
+	"net/http"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
@@ -38,5 +47,71 @@ func PostWhatsAuthRequest(c *fiber.Ctx) error {
 		ws.Status = string(c.Request().Host())
 		return c.JSON(ws)
 	}
+}
 
+func LoginUser(c *fiber.Ctx) error {
+	var userLogin models.UserLogin
+	var userInfo whatsauth.LoginInfo
+
+	db := config.Ulbimongoconn.Collection("user")
+
+	if err := c.BodyParser(&userLogin); err != nil {
+		return utils.ErrorLogRes(http.StatusBadRequest, err, "error", c)
+	}
+
+	if err := db.FindOne(context.TODO(), userLogin.UserName).Decode(userInfo); err == nil {
+		return utils.ErrorLogRes(http.StatusInternalServerError, err, "error", c)
+	}
+
+	if userLogin.UserName == "" {
+		return utils.ErrorLogRes(http.StatusBadRequest, errors.New("user not found"), "error", c)
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(userLogin.Password), []byte(userInfo.Password)); err != nil {
+		return utils.ErrorLogRes(http.StatusInternalServerError, err, "error", c)
+	}
+
+	maker, err := pisato.NewPasetoMaker(config.PrivateKey)
+	if err != nil {
+		return utils.ErrorLogRes(http.StatusBadRequest, err, "error", c)
+	}
+
+	token, err := maker.CreateToken(userLogin.UserName, 4*time.Hour)
+	if err != nil {
+		return utils.ErrorLogRes(http.StatusBadRequest, err, "error", c)
+	}
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "token",
+		Value:    token,
+		Expires:  time.Now().Add(4 * time.Hour),
+		Secure:   false,
+		HTTPOnly: true,
+	})
+	return utils.ErrorLogRes(http.StatusOK, nil, "ok", c)
+}
+
+func RegisterUser(c *fiber.Ctx) error {
+	var userInfo whatsauth.LoginInfo
+
+	db := config.Ulbimongoconn.Collection("user")
+
+	if err := c.BodyParser(&userInfo); err != nil {
+		return utils.ErrorLogRes(http.StatusBadRequest, err, "error", c)
+	}
+
+	var checkUserName whatsauth.LoginInfo
+	if _ = db.FindOne(context.TODO(), userInfo.Username).Decode(&checkUserName); checkUserName.Username != "" {
+		return utils.ErrorLogRes(http.StatusBadRequest, errors.New("user already exist"), "error", c)
+	}
+
+	userInfo.Uuid = uuid.New().String()
+	userInfo.Userid = uuid.New().String()
+	pass, _ := bcrypt.GenerateFromPassword([]byte(userInfo.Password), bcrypt.DefaultCost)
+	userInfo.Password = string(pass)
+
+	if _, err := db.InsertOne(context.TODO(), userInfo); err != nil {
+		return utils.ErrorLogRes(http.StatusBadRequest, err, "error", c)
+	}
+	return utils.ErrorLogRes(http.StatusOK, nil, "ok", c)
 }
