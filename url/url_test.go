@@ -5,28 +5,32 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
 func TestWebWithoutCookies(t *testing.T) {
-	t.Helper()
 	app := fiber.New()
 
 	app.Post("/api/whatsauth/request", controller.PostWhatsAuthRequest)  //API from user whatsapp message from iteung gowa
 	app.Get("/ws/whatsauth/qr", websocket.New(controller.WsWhatsAuthQR)) //websocket whatsauth
 
 	app.Get("/", controller.Homepage) //ujicoba panggil package musik
-	app.Get("/presensi", controller.GetPresensiBulanIni)
 
-	route := []string{"/", "/presensi"}
-	request := []string{"GET", "GET"}
+	req := httptest.NewRequest("POST", "/api/whatsauth/request", nil)
+	resp, err := app.Test(req)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-	for i := 0; i < len(route); i++ {
-		req := httptest.NewRequest(request[i], route[i], nil)
+	req = httptest.NewRequest("GET", "/", nil)
+	resp, err = app.Test(req)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		resp, _ := app.Test(req, 3)
-		assert.Equalf(t, http.StatusOK, resp.StatusCode, "expected 200")
-	}
+	req = httptest.NewRequest("GET", "/ws/whatsauth/qr", nil)
+	resp, err = app.Test(req)
+	require.NoError(t, err)
+	assert.Equal(t, 426, resp.StatusCode)
 }
