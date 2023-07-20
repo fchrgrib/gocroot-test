@@ -13,6 +13,7 @@ require (
 	github.com/o1egl/paseto v1.0.0
 	github.com/stretchr/testify v1.8.1
 	github.com/whatsauth/whatsauth v0.1.82
+	golang.org/x/crypto v0.6.0
 )
 
 require (
@@ -56,7 +57,6 @@ require (
 	go.mau.fi/libsignal v0.1.0 // indirect
 	go.mau.fi/whatsmeow v0.0.0-20230306190159-5caded34a872 // indirect
 	go.mongodb.org/mongo-driver v1.12.0 // indirect
-	golang.org/x/crypto v0.6.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect

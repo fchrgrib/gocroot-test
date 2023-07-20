@@ -5,11 +5,8 @@ import (
 )
 
 func ErrorLogRes(statusCode int, err error, statusDesc string, c *fiber.Ctx) error {
-	if err := c.Status(statusCode).JSON(fiber.Map{
+	return c.Status(statusCode).JSON(fiber.Map{
 		"status": statusDesc,
 		"error":  err,
-	}); err != nil {
-		return err
-	}
-	return err
+	})
 }
